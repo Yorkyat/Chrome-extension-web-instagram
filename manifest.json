@@ -7,13 +7,13 @@
     "icons": {"128": "icon.png"},
 
     "background":{
-        "scripts": ["background.js"]
+        "scripts": ["/scripts/background.js"]
     },
 
     "content_scripts":[
         {
-            "matches": ["http://localhost/chevereto/*"],
-            "js": ["content.js"]
+            "matches": ["http://localhost/chevereto/*", "https://localhost/chevereto/*"],
+            "js": ["/scripts/content.js"]
         }
     ],
 
