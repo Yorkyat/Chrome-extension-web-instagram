@@ -1,3 +1,11 @@
+$(document).ready(function(){
+    chrome.storage.local.get(["hostname"], function(result) {
+        if(typeof result.hostname !== "undefined"){
+            $("#hostname").val(result.hostname);
+        }
+    });
+});
+
 
 $(document).on("click", "#save", function(){
     event.preventDefault();
