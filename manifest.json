@@ -19,6 +19,8 @@
         }
     ],
 
+    "web_accessible_resources": ["/scripts/inject.js", "/scripts/caman.full.js"],
+
     "browser_action":{
         "default_icon": "icon.png",
         "default_popup": "popup.html"
