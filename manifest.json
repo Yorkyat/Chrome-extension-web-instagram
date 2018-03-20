@@ -7,19 +7,20 @@
     "icons": {"128": "icon.png"},
 
     "background":{
-        "scripts": ["/scripts/background.js", "/scripts/jquery-3.3.1.min.js"]
+        "scripts": ["/scripts/jquery-3.3.1.min.js", "/scripts/background.js"]
     },
 
     "content_security_policy": "script-src 'self' https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js; object-src 'self'",
 
     "content_scripts":[
         {
-            "matches": ["http://localhost/chevereto/*", "https://localhost/chevereto/*"],
-            "js": ["/scripts/content.js", "/scripts/jquery-3.3.1.min.js"]
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["/scripts/jquery-3.3.1.min.js", "/scripts/content.js"],
+            "css": ["/editor.css"]
         }
     ],
 
-    "web_accessible_resources": ["/scripts/inject.js", "/scripts/caman.full.js"],
+    "web_accessible_resources": ["/scripts/inject.js", "/scripts/caman.full.js", "/editor.html"],
 
     "browser_action":{
         "default_icon": "icon.png",
