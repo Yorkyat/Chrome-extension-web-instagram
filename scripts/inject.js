@@ -1,6 +1,6 @@
+// add edit with camanjs button
 var edit_btn = "<button type='button' class='camanjs btn green'>CamanJS</button>";
 $(".queue-item").append(edit_btn);
-
 $(".queue-item").css({ "margin-top": "25px", "margin-bottom": "25px", "margin-left": "10px", "margin-right": "10px" });
 
 $(document).on("click", ".camanjs", function () {
@@ -21,7 +21,8 @@ $(document).on("click", ".camanjs", function () {
             // target_canvas.height = source_canvas.height;
             // var target_canvas_ctx = target_canvas.getContext('2d');
             // target_canvas_ctx.drawImage(source_canvas, 0, 0);
-
+            
+            // draw canvas
             var canvas = document.getElementById('canvas');
             var ctx = canvas.getContext('2d');
             var img = new Image;
@@ -30,12 +31,20 @@ $(document).on("click", ".camanjs", function () {
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
             }
-            img.src = URL.createObjectURL(file);
+            // upload from device
+            if (file["url"] === undefined) {
+                img.src = URL.createObjectURL(file);
+            } else {
+                // upload by url
+                // solve cross-origin problem
+                img.setAttribute('crossorigin', 'anonymous');
+                img.src = 'https://cors-anywhere.herokuapp.com/' + file["url"];
+            }
         }
     });
 });
 
-// silders filters not stacked
+// silders filters(not stacked)
 // $(document).on("change", ".Filter input", function () {
 //     var data_filter = $(this).attr("data-filter");
 //     var val_change = $(this).val();
@@ -47,7 +56,7 @@ $(document).on("click", ".camanjs", function () {
 //     });
 // });
 
-// silders filters are stacked
+// silders filters(stacked)
 $(document).on("change", "#fullscreen-modal-box .Filter input", function () {
     var data_filter_array = [];
     var val_change_array = [];
@@ -71,15 +80,20 @@ $(document).on("change", "#fullscreen-modal-box .Filter input", function () {
             }
         });
         this.revert(false);
-        this.render();
+        this.render(function(){
+            console.log("filters applied")
+        });
     });
 })
 
+// preset filters
 $(document).on("click", "#PresetFilters a", function () {
     var preset_filter = $(this).attr("data-preset");
     Caman('.image-preview .canvas', function () {
         this[preset_filter]();
         this.revert(false);
-        this.render();
+        this.render(function(){
+            console.log(preset_filter + " completed");
+        });
     });
 });
