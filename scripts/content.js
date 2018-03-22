@@ -25,3 +25,9 @@ chrome.storage.local.get(["hostname"], function (result) {
         })
     }
 })
+
+document.addEventListener("click", function (e) {
+    if(e.target && e.target.dataset.action === "upload"){
+        chrome.storage.local.remove("uploadQueue");
+    }
+});
