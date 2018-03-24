@@ -1,7 +1,7 @@
 // add edit with camanjs button
 var edit_btn = "<button type='button' class='camanjs btn green edit'>CamanJS</button>";
 $(".queue-item").append(edit_btn);
-$(".queue-item").css({ "margin-top": "25px", "margin-bottom": "25px", "margin-left": "10px", "margin-right": "10px" });    
+$(".queue-item").css({ "margin-top": "25px", "margin-bottom": "25px", "margin-left": "10px", "margin-right": "10px" });
 
 // dict storing original image dataURL, parsedMeta, name
 var imgDict = {};
@@ -59,8 +59,11 @@ $(document).on("click", ".camanjs", function () {
                 } else {
                     // upload by url
                     // solve cross-origin problem
-                    img.setAttribute('crossorigin', 'anonymous');
-                    img.src = 'https://cors-anywhere.herokuapp.com/' + file["url"];
+                    // img.setAttribute('crossorigin', 'anonymous');
+                    // img.src = 'https://cors-anywhere.herokuapp.com/' + file["url"];
+                    chrome.runtime.sendMessage(injectExtensionId, { url: file["url"], type: parsedMeta.mimetype }, function (response) {
+                        img.src = response.dataUrl;
+                    });
                 }
             } else {
                 // resume

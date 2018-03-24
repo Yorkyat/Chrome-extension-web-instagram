@@ -4,6 +4,10 @@ chrome.storage.local.get(["hostname"], function (result) {
     var t = window.location.href;
 
     if (t.match(regex)) {
+        var s2 = document.createElement('script')
+        s2.textContent = `var injectExtensionId = '${chrome.runtime.id}'`
+        document.head.appendChild(s2)
+
         var s = document.createElement('script');
         // TODO: add "inject.js" to web_accessible_resources in manifest.json
         s.src = chrome.extension.getURL('/scripts/inject.js');

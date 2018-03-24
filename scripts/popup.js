@@ -8,7 +8,6 @@ $(document).ready(function () {
     });
     chrome.storage.local.get(["uploadQueue"], function (result) {
         if (typeof result.uploadQueue !== "undefined") {
-            console.log(result.uploadQueue);
             $("span").html(result.uploadQueue.length);
         }
     });

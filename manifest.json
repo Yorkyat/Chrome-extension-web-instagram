@@ -28,6 +28,10 @@
         "default_popup": "popup.html"
     },
 
+    "externally_connectable": {
+        "matches": ["*://localhost/*"]
+      },
+
     "permissions":[
         "contextMenus",
         "tabs",
