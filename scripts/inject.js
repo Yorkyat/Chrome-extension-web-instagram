@@ -160,6 +160,8 @@ $(document).on("click", ".queue-item [data-action=cancel]", function () {
 
 $(document).on("click", "[data-action=upload]", function(){
     imgDict = {};
+    presetFilterToken = undefined;
+    sliderFilterArray = ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"];
 });
 
 // silders filters(not stacked)
