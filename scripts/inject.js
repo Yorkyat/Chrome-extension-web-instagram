@@ -6,8 +6,10 @@ $(".queue-item").css({ "margin-top": "25px", "margin-bottom": "25px", "margin-le
 // dict storing original image dataURL, parsedMeta, name
 var imgDict = {};
 var presetFilterToken = undefined;
-var silderFilterArray = ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"];
+var sliderFilterArray = ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"];
 var data_filter_array = ["brightness", "contrast", "saturation", "vibrance", "exposure", "hue", "sepia", "gamma", "noise", "clip", "sharpen", "stackBlur"];
+// var presetFilterArray = [];
+var globalId = undefined;
 
 $(document).on("click", ".camanjs", function () {
     var modal_source = "#camanjs-edit-item";
@@ -18,12 +20,18 @@ $(document).on("click", ".camanjs", function () {
     var parsedMeta = file["parsedMeta"];
     var name = file["name"];
 
+    globalId = id;
+    presetFilterToken = undefined;
+
     PF.fn.modal.call({
         type: "html",
         template: $(modal_source).html(),
         callback: function () {
             $(".image-preview", modal).append($('<canvas/>', { 'id': 'canvas', "class": "canvas", "data-caman-hidpi-disabled": "false" }));
             $('html').data('modal-form-values', {})
+
+            $("#PresetFilters a").addClass("blue");
+            $("#PresetFilters a").removeClass("orange");
 
             // var source_canvas = $(".queue-item[data-id="+id+"] .preview .canvas")[0];
             // var target_canvas = $(".image-preview .canvas", modal)[0];
@@ -49,8 +57,8 @@ $(document).on("click", ".camanjs", function () {
                     imgDict[id]["dataURL"] = dataURL;
                     imgDict[id]["parsedMeta"] = parsedMeta;
                     imgDict[id]["name"] = name;
-                    imgDict[id]["presetFilter"] = presetFilterToken;
-                    imgDict[id]["sliderFilter"] = silderFilterArray;
+                    imgDict[id]["presetFilter"] = [];
+                    imgDict[id]["sliderFilter"] = sliderFilterArray;
 
                 }
                 // upload from device
@@ -67,11 +75,15 @@ $(document).on("click", ".camanjs", function () {
                 }
             } else {
                 // resume
+                sliderFilterArray = imgDict[id]["sliderFilter"];
+
                 img.onload = function () {
                     // draw canvas
                     canvas.width = img.width;
                     canvas.height = img.height;
                     ctx.drawImage(img, 0, 0);
+
+                    // set the values of the sliders in last edit
                     $("#fullscreen-modal-box .Filter input").each(function (index) {
                         $(this).val(imgDict[id]["sliderFilter"][index]);
                         $(this).siblings(".FilterValue").html(imgDict[id]["sliderFilter"][index]);
@@ -80,28 +92,29 @@ $(document).on("click", ".camanjs", function () {
                     // do filters
                     Caman(canvas, function () {
                         var temp = this;
+                        this.revert(false);
 
                         // do silder filters
-                        if (imgDict[id]["presetFilter"] === undefined) {
-                            $.each(data_filter_array, function (index) {
-                                var data_filter = data_filter_array[index];
-                                var val_change = imgDict[id]["sliderFilter"][index];
-                                if (val_change !== "0") {
-                                    if (data_filter === "gamma") {
-                                        temp[data_filter](parseFloat(val_change));
-                                    }
-                                    else {
-                                        temp[data_filter](parseInt(val_change));
-                                    }
+                        $.each(data_filter_array, function (index) {
+                            var data_filter = data_filter_array[index];
+                            var val_change = imgDict[id]["sliderFilter"][index];
+                            if (val_change !== "0") {
+                                if (data_filter === "gamma") {
+                                    temp[data_filter](parseFloat(val_change));
                                 }
-                            });
-                        } else {
-                            // do preset filter
-                            if (imgDict[id]["presetFilter"] !== "original") {
-                                this[(imgDict[id]["presetFilter"])]();
+                                else {
+                                    temp[data_filter](parseInt(val_change));
+                                }
                             }
+                        });
+
+                        // do preset filter
+                        if (typeof imgDict[globalId]["presetFilter"] !== "undefined" && imgDict[globalId]["presetFilter"].length > 0) {
+                            $.each(imgDict[globalId]["presetFilter"], function (index) {
+                                temp[imgDict[globalId]["presetFilter"][index]]();
+                            });
                         }
-                        this.revert(false);
+
                         this.render(function () {
                             console.log("resume finished")
                         });
@@ -116,9 +129,12 @@ $(document).on("click", ".camanjs", function () {
                 blobFile["parsedMeta"] = imgDict[id]["parsedMeta"];
                 blobFile["name"] = imgDict[id]["name"];
                 CHV.fn.uploader.files[id] = blobFile;
-            })
-            imgDict[id]["presetFilter"] = presetFilterToken;
-            imgDict[id]["sliderFilter"] = silderFilterArray;
+            });
+
+            if (presetFilterToken) {
+                imgDict[id]["presetFilter"].push(presetFilterToken);
+            }
+            imgDict[id]["sliderFilter"] = sliderFilterArray;
 
             var canvasPreview = $(".queue-item[data-id=" + id + "] .preview").find("canvas")[0];
             var ctxPreview = canvasPreview.getContext('2d');
@@ -142,6 +158,10 @@ $(document).on("click", ".queue-item [data-action=cancel]", function () {
     }
 });
 
+$(document).on("click", "[data-action=upload]", function(){
+    imgDict = {};
+});
+
 // silders filters(not stacked)
 // $(document).on("change", ".Filter input", function () {
 //     var data_filter = $(this).attr("data-filter");
@@ -156,20 +176,21 @@ $(document).on("click", ".queue-item [data-action=cancel]", function () {
 
 // silders filters(stacked)
 $(document).on("change", "#fullscreen-modal-box .Filter input", function () {
-    presetFilterToken = undefined;
-    silderFilterArray = [];
-
+    sliderFilterArray = [];
     $("#fullscreen-modal-box .Filter input").each(function () {
         var val_change = $(this).val();
-        silderFilterArray.push(val_change);
+        sliderFilterArray.push(val_change);
         $(this).siblings(".FilterValue").html(val_change);
     });
 
     Caman("#fullscreen-modal-box .image-preview .canvas", function () {
         var self = this;
+        this.revert(false);
+
+        // apply custom filters
         $.each(data_filter_array, function (index) {
             var data_filter = data_filter_array[index];
-            var val_change = silderFilterArray[index];
+            var val_change = sliderFilterArray[index];
             if (val_change !== "0") {
                 if (data_filter === "gamma") {
                     self[data_filter](parseFloat(val_change));
@@ -179,7 +200,19 @@ $(document).on("change", "#fullscreen-modal-box .Filter input", function () {
                 }
             }
         });
-        this.revert(false);
+
+        // apply the preset filters saved before
+        if (typeof imgDict[globalId]["presetFilter"] !== "undefined" && imgDict[globalId]["presetFilter"].length > 0) {
+            $.each(imgDict[globalId]["presetFilter"], function (index) {
+                self[imgDict[globalId]["presetFilter"][index]]();
+            });
+        }
+
+        // apply the preset filter in the current edit state
+        if (presetFilterToken) {
+            self[presetFilterToken]();
+        }
+
         this.render(function () {
             console.log("filters applied")
         });
@@ -188,22 +221,69 @@ $(document).on("change", "#fullscreen-modal-box .Filter input", function () {
 
 // preset filters
 $(document).on("click", "#PresetFilters a", function () {
+    var tempObj = this;
+    var tempHtml = $(this).html();
     var preset_filter = $(this).attr("data-preset");
-    presetFilterToken = preset_filter;
+    if (preset_filter === "original") {
+        presetFilterToken = undefined;
+    } else {
+        presetFilterToken = preset_filter;
+    }
 
-    // reset the sliders value
-    $("#fullscreen-modal-box .Filter input").each(function () {
-        $(this).val(0);
-        $(this).siblings(".FilterValue").html(0);
-    });
+    $("#PresetFilters a").addClass("blue");
+    $("#PresetFilters a").removeClass("orange");
+
+    $(this).removeClass("blue");
+    $(this).addClass("orange");
+    $(this).html("Rending");
+
+    // // reset the sliders value
+    // $("#fullscreen-modal-box .Filter input").each(function () {
+    //     $(this).val(0);
+    //     $(this).siblings(".FilterValue").html(0);
+    // });
 
     Caman('.image-preview .canvas', function () {
-        if (preset_filter !== "original") {
-            this[preset_filter]();
-        }
+        var self = this;
         this.revert(false);
+
+        // apply custom filters in the current state
+        if (preset_filter !== "original") {
+            $.each(data_filter_array, function (index) {
+                var data_filter = data_filter_array[index];
+                var val_change = sliderFilterArray[index];
+                if (val_change !== "0") {
+                    if (data_filter === "gamma") {
+                        self[data_filter](parseFloat(val_change));
+                    }
+                    else {
+                        self[data_filter](parseInt(val_change));
+                    }
+                }
+            });
+        } else {
+            $("#fullscreen-modal-box .Filter input").each(function () {
+                sliderFilterArray = ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"];
+                $(this).val(0);
+                $(this).siblings(".FilterValue").html(0);
+            });
+        }
+
+        // apply the preset filters saved before
+        if (typeof imgDict[globalId]["presetFilter"] !== "undefined" && imgDict[globalId]["presetFilter"].length > 0) {
+            $.each(imgDict[globalId]["presetFilter"], function (index) {
+                self[imgDict[globalId]["presetFilter"][index]]();
+            });
+        }
+
+        // apply the preset filter
+        if (presetFilterToken) {
+            self[presetFilterToken]();
+        }
+
         this.render(function () {
             console.log(preset_filter + " completed");
+            $(tempObj).html(tempHtml);
         });
     });
 });
